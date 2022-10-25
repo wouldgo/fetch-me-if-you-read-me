@@ -11,14 +11,14 @@ test: deps
 	go test -timeout 120s -cover -coverprofile=_out/.coverage -v ./...;
 	go tool cover -html=_out/.coverage;
 
-performer: deps
+fmiyrm: deps
 	go run $(ENTRYPOINT)
 
-compile-performer: deps
+compile-fmiyrm: deps
 	CGO_ENABLED=0 \
 	go build \
 		-ldflags='-extldflags=-static' \
-		-a -o _out/performer $(ENTRYPOINT)
+		-a -o _out/fmiyrm $(ENTRYPOINT)
 
 deps: musl
 	go mod tidy -v

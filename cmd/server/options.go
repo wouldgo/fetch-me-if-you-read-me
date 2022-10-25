@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"fetch-me-if-you-read-me/imager"
+	"fetch-me-if-you-read-me/imaginer"
 	"fetch-me-if-you-read-me/server"
 	"flag"
 	"fmt"
@@ -17,8 +17,8 @@ var (
 )
 
 type Options struct {
-	Imager *imager.ImaginerConfs
-	Server *server.ServerConfs
+	Imaginer *imaginer.ImaginerConfs
+	Server   *server.ServerConfs
 }
 
 func parseOptions() (*Options, error) {
@@ -46,7 +46,7 @@ func parseOptions() (*Options, error) {
 		return nil, errors.New("image color is not a valid hex value")
 	}
 
-	imagerConf := imager.ImaginerConfs{
+	imaginerConf := imaginer.ImaginerConfs{
 		Color: &rgbaColor,
 	}
 
@@ -56,8 +56,8 @@ func parseOptions() (*Options, error) {
 	}
 
 	return &Options{
-		Imager: &imagerConf,
-		Server: &serverConf,
+		Imaginer: &imaginerConf,
+		Server:   &serverConf,
 	}, nil
 }
 

@@ -1,4 +1,4 @@
-package imager
+package imaginer
 
 import (
 	"image/color"

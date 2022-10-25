@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/breml/rootcerts v0.2.8
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/mux v1.8.0
 	github.com/stretchr/testify v1.8.1
 )
 

@@ -1,4 +1,4 @@
-package imager
+package imaginer
 
 import (
 	"image"
@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var CyanColor = color.RGBA{100, 200, 200, 0xff}
+var cyanColor = color.RGBA{100, 200, 200, 0xff}
 
 type ImaginerConfs struct {
 	Color  *color.RGBA
@@ -27,7 +27,7 @@ type Image struct {
 }
 
 func New(conf *ImaginerConfs) (*Imaginer, error) {
-	color := CyanColor
+	color := cyanColor
 	var width, height uint = 1, 1
 
 	if conf.Color != nil {
