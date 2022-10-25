@@ -1,0 +1,5 @@
+_out/*
+!_out/.keep
+tests/*
+!tests/.keep
+.vscode/*
