@@ -4,6 +4,8 @@ import (
 	"fetch-me-if-you-read-me/imaginer"
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type imagesCreate struct {
@@ -17,6 +19,11 @@ func newImagesCreate(imaginer *imaginer.Imaginer) *imagesCreate {
 }
 
 func (c *imagesCreate) createImage(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(c)
-	w.WriteHeader(http.StatusOK)
+	id := uuid.New()
+	newLocation := fmt.Sprintf("images/%s", id.String())
+
+	w.Header().Add("Location", newLocation)
+	w.WriteHeader(http.StatusTemporaryRedirect)
+
+	w.Write([]byte(""))
 }

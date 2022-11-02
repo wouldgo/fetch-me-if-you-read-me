@@ -31,7 +31,7 @@ func New(confs *ServerConfs, imaginer *imaginer.Imaginer) (*Server, error) {
 	imageGet := newImagesGet(imaginer)
 
 	router.Path("/images").
-		Methods("POST").
+		Methods("GET").
 		HandlerFunc(createImage.createImage)
 
 	router.Path("/images/{uuid}").
