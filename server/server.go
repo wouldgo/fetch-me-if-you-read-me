@@ -2,6 +2,8 @@ package server
 
 import (
 	"fetch-me-if-you-read-me/imaginer"
+	logging "fetch-me-if-you-read-me/logger"
+	"fetch-me-if-you-read-me/model"
 	"fmt"
 
 	"net/http"
@@ -19,16 +21,15 @@ type Server struct {
 	listenString string
 }
 
-func New(confs *ServerConfs, imaginer *imaginer.Imaginer) (*Server, error) {
-
+func New(confs *ServerConfs, logger *logging.Logger, imaginer *imaginer.Imaginer, model *model.Model) (*Server, error) {
 	listenString := fmt.Sprintf("%s:%s", confs.Host, confs.Port)
 	router := &Server{
 		*mux.NewRouter(),
 		listenString,
 	}
 
-	createImage := newImagesCreate(imaginer)
-	imageGet := newImagesGet(imaginer)
+	createImage := newImagesCreate(logger, imaginer, model)
+	imageGet := newImagesGet(logger, imaginer, model)
 
 	router.Path("/images").
 		Methods("GET").
