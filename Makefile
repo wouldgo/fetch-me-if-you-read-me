@@ -6,12 +6,17 @@ LD := $(OUT)/$(BUILDARCH)-linux-musl-cross/bin/$(BUILDARCH)-linux-musl-ld
 VERSION := 0.0.1
 ENTRYPOINT := cmd/server/main.go cmd/server/options.go
 
+include LOCAL_ENV
+
+env:
+	$(eval export $(shell sed -ne 's/ *#.*$$//; /./ s/=.*$$// p' LOCAL_ENV))
+
 test: deps
 	rm -Rf _out/.coverage;
 	go test -timeout 120s -cover -coverprofile=_out/.coverage -v ./...;
 	go tool cover -html=_out/.coverage;
 
-fmiyrm: deps
+fmiyrm: deps env
 	go run $(ENTRYPOINT)
 
 compile-fmiyrm: deps

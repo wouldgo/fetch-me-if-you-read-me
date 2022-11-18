@@ -71,4 +71,4 @@ CREATE INDEX IF NOT EXISTS images_accesed_image_fk_idx
   ON mafiyrm.images_accesed (image_fk);
 
 CREATE INDEX IF NOT EXISTS images_accesed_who_idx
-  ON mafiyrm.images_accesed (who);
+  ON mafiyrm.images_accesed (who_fk);

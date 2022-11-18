@@ -32,11 +32,11 @@ func New(confs *ServerConfs, logger *logging.Logger, imaginer *imaginer.Imaginer
 	imageGet := newImagesGet(logger, imaginer, model)
 
 	router.Path("/images").
-		Methods("GET").
+		Methods("POST").
 		HandlerFunc(createImage.createImage)
 
 	router.Path("/images/{uuid}").
-		Methods("GET").
+		Methods("HEAD", "GET", "POST").
 		HandlerFunc(imageGet.imageGet)
 
 	return router, nil

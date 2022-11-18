@@ -43,6 +43,8 @@ func parseOptions() (*Options, error) {
 	postgresqlUsername := flag.String("postgresql-username", "", "postgresql user")
 	postgresqlPassword := flag.String("postgresql-password", "", "postgresql password")
 	postgresqlThreads := flag.Int("postgresql-threads", 1, "number of thread for postgresql client")
+	postgresqlSchema := flag.String("postgresql-schema", "mafiyrm", "schema where application puts it data model")
+	postgresqlMigrationsTable := flag.String("postgresql-migrations-table", "migrations", "table where migrator puts it data model")
 
 	flag.Parse()
 
@@ -60,6 +62,8 @@ func parseOptions() (*Options, error) {
 	postgresqlUsernameEnv, postgresqlUsernameEnvSet := os.LookupEnv("POSTGRESQL_USERNAME")
 	postgresqlPasswordEnv, postgresqlPasswordEnvSet := os.LookupEnv("POSTGRESQL_PASSWORD")
 	postgresqlThreadsEnv, postgresqlThreadsEnvSet := os.LookupEnv("POSTGRESQL_THREADS")
+	postgresqlSchemaEnv, postgresqlSchemaEnvSet := os.LookupEnv("POSTGRESQL_SCHEMA")
+	postgresqlMigrationsTableEnv, postgresqlMigrationsTableEnvSet := os.LookupEnv("POSTGRESQL_MIGARTIONS_TABLE")
 
 	if hostEnvSet {
 		host = &hostEnv
@@ -152,6 +156,16 @@ func parseOptions() (*Options, error) {
 		*postgresqlThreads = int(postgresqlThreadsFromEnv)
 	}
 
+	if postgresqlSchemaEnvSet {
+
+		postgresqlSchema = &postgresqlSchemaEnv
+	}
+
+	if postgresqlMigrationsTableEnvSet {
+
+		postgresqlMigrationsTable = &postgresqlMigrationsTableEnv
+	}
+
 	if postgresqlAdministrator == nil ||
 		postgresqlAdministratorPassword == nil ||
 		postgresqlHost == nil ||
@@ -184,6 +198,8 @@ func parseOptions() (*Options, error) {
 			Password:              postgresqlPassword,
 			Threads:               postgresqlThreads,
 			ApplicationName:       applicationName,
+			Schema:                postgresqlSchema,
+			MigrationTable:        postgresqlMigrationsTable,
 		},
 		Logger: &logging.Logger{
 			Log: sugar,

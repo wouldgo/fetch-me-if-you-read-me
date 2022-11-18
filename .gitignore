@@ -3,3 +3,6 @@ _out/*
 tests/*
 !tests/.keep
 .vscode/*
+/.blackbox/pubring.gpg~
+/.blackbox/pubring.kbx~
+/.blackbox/secring.gpg

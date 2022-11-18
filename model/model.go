@@ -28,14 +28,14 @@ var migrations embed.FS
 var (
 	insertImage = strings.Join([]string{
 		"INSERT INTO mafiyrm.images(",
-		"  used_id",
+		"  used_in",
 		")",
 		"VALUES ($1)",
-		"ON CONFLIC ON CONSTRAINT images_pkey",
+		"ON CONFLICT ON CONSTRAINT images_pkey",
 		"DO UPDATE",
 		"SET",
 		"  last_update_date = CURRENT_TIMESTAMP",
-		"WHERE images.used_id = $1",
+		"WHERE images.used_in = $1",
 		"RETURNING id::varchar AS image_fk",
 	}, " ")
 	insertWhoIsFetching = strings.Join([]string{
@@ -69,6 +69,8 @@ type PostgresqlConfigurations struct {
 	Database              *string
 	Threads               *int
 	ApplicationName       string
+	Schema                *string
+	MigrationTable        *string
 }
 
 type Model struct {
@@ -89,7 +91,7 @@ func (model *Model) ImageFetched(imageFk uuid.UUID, remoteAddr string, meta map[
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	tx, err := model.pool.BeginTx(ctx, *model.txOpts)
@@ -123,7 +125,7 @@ func (model *Model) ImageFetched(imageFk uuid.UUID, remoteAddr string, meta map[
 }
 
 func (model *Model) PrepareImage(usedIn string) (*uuid.UUID, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	tx, err := model.pool.BeginTx(ctx, *model.txOpts)
@@ -209,13 +211,14 @@ func New(logger *logging.Logger, postgresqlConfigurations *PostgresqlConfigurati
 	}
 }
 
-func setupDatabase(username, password, database string) (string, error) {
+func setupDatabase(username, password, database, schema string) (string, error) {
 
 	//TODO sanitize
 	sqlComment := "--"
 	if strings.Contains(username, sqlComment) ||
 		strings.Contains(password, sqlComment) ||
-		strings.Contains(database, sqlComment) {
+		strings.Contains(database, sqlComment) ||
+		strings.Contains(schema, sqlComment) {
 		return " ", errors.New("invalid characters in username, password or database")
 	}
 
@@ -232,15 +235,15 @@ func setupDatabase(username, password, database string) (string, error) {
 		"  END IF;",
 		"END",
 		"$do$;",
-		"CREATE SCHEMA IF NOT EXISTS network AUTHORIZATION \"" + username + "\";",
+		"CREATE SCHEMA IF NOT EXISTS " + schema + " AUTHORIZATION \"" + username + "\";",
 		"GRANT CONNECT ON DATABASE \"" + database + "\" TO \"" + username + "\";",
-		"GRANT USAGE ON ALL SEQUENCES IN SCHEMA network TO \"" + username + "\";",
-		"GRANT CREATE ON SCHEMA network TO \"" + username + "\";",
-		"GRANT SELECT, INSERT, UPDATE, REFERENCES ON ALL TABLES IN SCHEMA network TO \"" + username + "\";",
+		"GRANT USAGE ON ALL SEQUENCES IN SCHEMA " + schema + " TO \"" + username + "\";",
+		"GRANT CREATE ON SCHEMA " + schema + " TO \"" + username + "\";",
+		"GRANT SELECT, INSERT, UPDATE, REFERENCES ON ALL TABLES IN SCHEMA " + schema + " TO \"" + username + "\";",
 		"GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO \"" + username + "\";",
 		"GRANT USAGE ON SCHEMA public TO \"" + username + "\";",
-		"GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA network TO \"" + username + "\";",
-		"GRANT USAGE ON SCHEMA network TO \"" + username + "\";",
+		"GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA " + schema + " TO \"" + username + "\";",
+		"GRANT USAGE ON SCHEMA " + schema + " TO \"" + username + "\";",
 	}, " "), nil
 }
 
@@ -266,10 +269,12 @@ func (m *Model) migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	migrator, err := migrate.NewWithSourceInstance("httpfs", sourceInstance, fmt.Sprintf(strings.Join([]string{
 		"postgres://%s:%s@%s:5432/%s?",
 		"application_name=%s",
 		"&connect_timeout=20",
+		"&x-migrations-table=%s.%s",
 		"&sslmode=disable",
 	}, ""),
 		*m.postgresqlConfigurations.Administrator,
@@ -277,13 +282,15 @@ func (m *Model) migrate(ctx context.Context) error {
 		*m.postgresqlConfigurations.Host,
 		*m.postgresqlConfigurations.Database,
 		m.postgresqlConfigurations.ApplicationName,
+		*m.postgresqlConfigurations.Schema,
+		*m.postgresqlConfigurations.MigrationTable,
 	))
 	if err != nil {
 		return err
 	}
 
 	setupDatabaseStr, err := setupDatabase(*m.postgresqlConfigurations.Username,
-		*m.postgresqlConfigurations.Password, *m.postgresqlConfigurations.Database)
+		*m.postgresqlConfigurations.Password, *m.postgresqlConfigurations.Database, *m.postgresqlConfigurations.Schema)
 	if err != nil {
 		return err
 	}
@@ -318,7 +325,7 @@ func (model *Model) keepAlive() {
 		case <-model.keepAliveDone:
 			return
 		case _ = <-model.keepAliveTicker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
 			err := model.pool.Ping(ctx)
 
