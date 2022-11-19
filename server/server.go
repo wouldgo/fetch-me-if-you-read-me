@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type ServerConfs struct {
@@ -19,6 +20,7 @@ type ServerConfs struct {
 type Server struct {
 	mux.Router
 	listenString string
+	logger       *zap.SugaredLogger
 }
 
 func New(confs *ServerConfs, logger *logging.Logger, imaginer *imaginer.Imaginer, model *model.Model) (*Server, error) {
@@ -26,12 +28,21 @@ func New(confs *ServerConfs, logger *logging.Logger, imaginer *imaginer.Imaginer
 	router := &Server{
 		*mux.NewRouter(),
 		listenString,
+		logger.Log,
 	}
 
+	logger.Log.Debugf("Creating server on %s ...", listenString)
 	createImage := newImagesCreate(logger, imaginer, model)
 	imageGet := newImagesGet(logger, imaginer, model)
+	statusHandlerFunc := newStatus(logger, model)
 
-	router.Path("/images").
+	router.
+		Methods("GET").
+		Path("/live").
+		HandlerFunc(statusHandlerFunc.statusHandler)
+
+	router.
+		Path("/images").
 		Methods("POST").
 		HandlerFunc(createImage.createImage)
 
@@ -47,5 +58,6 @@ func (server *Server) Listen() error {
 	if err != nil {
 		return err
 	}
+	server.logger.Infof("Listening on server %s...", server.listenString)
 	return nil
 }

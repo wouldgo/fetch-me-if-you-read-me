@@ -16,10 +16,19 @@ test: deps
 	go test -timeout 120s -cover -coverprofile=_out/.coverage -v ./...;
 	go tool cover -html=_out/.coverage;
 
-fmiyrm: deps env
+clean-compile: clean compile
+
+docker-build:
+	./_tools/docker-buildx \
+		build \
+			--platform linux/arm64 \
+			-f cmd/server/Dockerfile \
+			-t ghcr.io/wouldgo/fmiyrm:$(VERSION) .
+
+run: deps env
 	go run $(ENTRYPOINT)
 
-compile-fmiyrm: deps
+compile: deps
 	CGO_ENABLED=0 \
 	go build \
 		-ldflags='-extldflags=-static' \
@@ -31,7 +40,7 @@ deps: musl
 
 musl:
 	if [ ! -d "$(OUT)/$(BUILDARCH)-linux-musl-cross" ]; then \
-		(cd $(OUT); curl -LOk https://musl.cc/$(BUILDARCH)-linux-musl-cross.tgz) && \
+		(cd $(OUT); curl --limit-rate 1G -LOk https://musl.cc/$(BUILDARCH)-linux-musl-cross.tgz) && \
 		tar zxf $(OUT)/$(BUILDARCH)-linux-musl-cross.tgz -C $(OUT); \
 	fi
 

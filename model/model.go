@@ -43,12 +43,12 @@ var (
 		"  remote_addr,",
 		"  meta",
 		")",
-		"VALUES ($1, $1::jsonb)",
+		"VALUES ($1, $2::jsonb)",
 		"ON CONFLICT ON CONSTRAINT who_pkey",
 		"DO UPDATE",
 		"SET",
 		"  last_update_date = CURRENT_TIMESTAMP",
-		"WHERE remote_addr = $1",
+		"WHERE who.remote_addr = $1",
 		"RETURNING id::varchar AS who_fk",
 	}, " ")
 	boundWhoIsFetchingWithImage = strings.Join([]string{
@@ -85,6 +85,7 @@ type Model struct {
 }
 
 func (model *Model) ImageFetched(imageFk uuid.UUID, remoteAddr string, meta map[string][]string) error {
+	model.logger.Debugf("Storing %s remote address for %s imageFk", remoteAddr, imageFk)
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
 
@@ -125,6 +126,7 @@ func (model *Model) ImageFetched(imageFk uuid.UUID, remoteAddr string, meta map[
 }
 
 func (model *Model) PrepareImage(usedIn string) (*uuid.UUID, error) {
+	model.logger.Debugf("Creating image reference used in %s", usedIn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
@@ -319,27 +321,37 @@ func (m *Model) migrate(ctx context.Context) error {
 	return nil
 }
 
+func (model *Model) CheckStatus() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	err := model.pool.Ping(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	select {
+	case <-ctx.Done():
+		errorStr := ctx.Err().Error()
+		model.logger.Errorf("Connection check to pg went in error: %s", errorStr)
+		return ctx.Err()
+	default:
+		model.logger.Debug("Still connected to postgresql")
+		return nil
+	}
+}
+
 func (model *Model) keepAlive() {
 	for {
 		select {
 		case <-model.keepAliveDone:
 			return
 		case _ = <-model.keepAliveTicker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-			defer cancel()
-			err := model.pool.Ping(ctx)
+			err := model.CheckStatus()
 
 			if err != nil {
-				panic(err.Error())
-			}
 
-			select {
-			case <-ctx.Done():
-				errorStr := ctx.Err().Error()
-				model.logger.Errorf("Connection check to pg went in error: %s", errorStr)
-				panic(errorStr)
-			default:
-				model.logger.Debug("Still connected to postgresql")
+				panic(err.Error())
 			}
 		}
 	}

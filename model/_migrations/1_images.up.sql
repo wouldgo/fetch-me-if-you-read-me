@@ -61,14 +61,14 @@ CREATE TRIGGER generate_id
 
 ---
 
-CREATE TABLE IF NOT EXISTS mafiyrm.images_accesed (
+CREATE TABLE IF NOT EXISTS mafiyrm.images_accessed (
   image_fk UUID NOT NULL,
   who_fk UUID NOT NULL,
   create_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS images_accesed_image_fk_idx
-  ON mafiyrm.images_accesed (image_fk);
+CREATE INDEX IF NOT EXISTS images_accessed_image_fk_idx
+  ON mafiyrm.images_accessed (image_fk);
 
-CREATE INDEX IF NOT EXISTS images_accesed_who_idx
-  ON mafiyrm.images_accesed (who_fk);
+CREATE INDEX IF NOT EXISTS images_accessed_who_idx
+  ON mafiyrm.images_accessed (who_fk);

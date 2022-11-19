@@ -56,7 +56,11 @@ func (c *imagesGet) imageGet(w http.ResponseWriter, r *http.Request) {
 		meta[key] = value
 	}
 
-	c.model.ImageFetched(imageFkUUID, r.RemoteAddr, meta)
+	err = c.model.ImageFetched(imageFkUUID, r.RemoteAddr, meta)
+	if err != nil {
+
+		c.logger.Error(err.Error())
+	}
 }
 
 func newImagesGet(logger *logging.Logger, imaginer *imaginer.Imaginer, model *model.Model) *imagesGet {
