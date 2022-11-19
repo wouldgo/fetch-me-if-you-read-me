@@ -46,17 +46,26 @@ func (c *imagesGet) imageGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(buf.Bytes())
 
-	meta := make(map[string][]string)
+	meta := make(map[string]string)
 
-	for key, value := range r.Header {
-		meta[key] = value
+	for key, _ := range r.Header {
+		meta[key] = r.Header.Get(key)
 	}
 
-	for key, value := range r.Trailer {
-		meta[key] = value
+	for key, _ := range r.Trailer {
+		meta[key] = r.Trailer.Get(key)
 	}
 
-	err = c.model.ImageFetched(imageFkUUID, r.RemoteAddr, meta)
+	sourceAddr := meta["X-Real-Ip"]
+
+	if sourceAddr == "" {
+
+		sourceAddr = meta["X-Forwarded-For"]
+	}
+
+	meta["X-Remote-Addr"] = r.RemoteAddr
+
+	err = c.model.ImageFetched(imageFkUUID, sourceAddr, meta)
 	if err != nil {
 
 		c.logger.Error(err.Error())

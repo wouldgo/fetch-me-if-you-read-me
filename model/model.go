@@ -84,7 +84,7 @@ type Model struct {
 	txOpts                   *pgx.TxOptions
 }
 
-func (model *Model) ImageFetched(imageFk uuid.UUID, remoteAddr string, meta map[string][]string) error {
+func (model *Model) ImageFetched(imageFk uuid.UUID, remoteAddr string, meta map[string]string) error {
 	model.logger.Debugf("Storing %s remote address for %s imageFk", remoteAddr, imageFk)
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
