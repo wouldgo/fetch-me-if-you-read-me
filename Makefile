@@ -3,7 +3,7 @@ OUT := $(shell pwd)/_out
 BUILDARCH := $(shell uname -m)
 GCC := $(OUT)/$(BUILDARCH)-linux-musl-cross/bin/$(BUILDARCH)-linux-musl-gcc
 LD := $(OUT)/$(BUILDARCH)-linux-musl-cross/bin/$(BUILDARCH)-linux-musl-ld
-VERSION := 0.0.2
+VERSION := 0.0.3
 ENTRYPOINT := cmd/server/main.go cmd/server/options.go
 
 include LOCAL_ENV
