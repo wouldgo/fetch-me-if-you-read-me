@@ -48,11 +48,11 @@ func (c *imagesGet) imageGet(w http.ResponseWriter, r *http.Request) {
 
 	meta := make(map[string]string)
 
-	for key, _ := range r.Header {
+	for key := range r.Header {
 		meta[key] = r.Header.Get(key)
 	}
 
-	for key, _ := range r.Trailer {
+	for key := range r.Trailer {
 		meta[key] = r.Trailer.Get(key)
 	}
 
